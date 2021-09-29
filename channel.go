@@ -46,7 +46,7 @@ func NewChannelPool(initialCap, maxCap int, name string, factory PoolFactory, cl
 		name:        name,
 		factory:     factory,
 		closeAt:     closeAt,
-		aliveChecks: false,
+		aliveChecks: true,
 	}
 
 	// create initial connections, if something goes wrong,
@@ -95,8 +95,6 @@ func (c *channelPool) Get() (*PoolConn, error) {
 		if !c.aliveChecks || isAlive(conn) {
 			return c.wrapConn(conn, c.closeAt), nil
 		}
-
-		log.Printf("connection dead\n")
 		conn.Close()
 		return c.NewConn()
 	default:
