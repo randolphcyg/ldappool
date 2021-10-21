@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	"unicode/utf16"
 
 	"github.com/go-ldap/ldap/v3"
 )
@@ -26,6 +25,7 @@ type ldapCfg struct {
 	Password string `json:"password" gorm:"type:varchar(255);not null;comment:密码"`
 }
 
+// 测试时给定的LDAP连接配置
 var cfg = ldapCfg{
 	ConnUrl:       "ldap://xx.xx.xx.xx:389",
 	SslEncryption: false,
@@ -35,6 +35,7 @@ var cfg = ldapCfg{
 	Password:      "XXXXXXXXX",
 }
 
+// 需要返回的用户的属性列表
 var attrs = []string{
 	"employeeNumber",     // 工号
 	"sAMAccountName",     // SAM账号
@@ -58,10 +59,8 @@ var attrs = []string{
 
 // 测试连接池
 func TestLdapPool(t *testing.T) {
-
-	n := utf16.Encode([]rune("3"))
-	pool, err := NewChannelPool(10, 1000, "test",
-		func(s string) (ldap.Client, error) {
+	pool, err := NewChannelPool(10, 1000, "testLdapPool",
+		func(name string) (ldap.Client, error) {
 			conn, err := ldap.DialURL(cfg.ConnUrl)
 			if err != nil {
 				fmt.Println("Fail to dial ldap url, err: ", err)
@@ -77,7 +76,7 @@ func TestLdapPool(t *testing.T) {
 				fmt.Println("admin user auth failed, err: ", err)
 			}
 			return conn, nil
-		}, n)
+		}, []uint16{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -101,10 +100,9 @@ func TestLdapPool(t *testing.T) {
 }
 
 // 测试查询用户
-func TestSearchUser(t *testing.T) {
-	n := utf16.Encode([]rune("你好"))
-	pool, err := NewChannelPool(5, 100, "test",
-		func(s string) (ldap.Client, error) {
+func TestFetchUser(t *testing.T) {
+	pool, err := NewChannelPool(5, 100, "testFetchUserLdapPool",
+		func(name string) (ldap.Client, error) {
 			conn, err := ldap.DialURL(cfg.ConnUrl)
 			if err != nil {
 				fmt.Println("Fail to dial ldap url, err: ", err)
@@ -120,21 +118,17 @@ func TestSearchUser(t *testing.T) {
 				fmt.Println("admin user auth failed, err: ", err)
 			}
 			return conn, nil
-		}, n)
+		}, []uint16{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork})
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(pool.Len())
 	conn, _ := pool.Get()
 
 	// 多查询条件 根据employeeNumber和displayName字段查询
 	ldapFilterNum := "(employeeNumber=" + "9527" + ")"
 	ldapFilterName := "(displayName=" + "张三" + ")"
-
 	searchFilter := "(&(objectClass=user)(mail=*))" // 有邮箱的用户 排除系统级别用户
-
 	searchFilter += ldapFilterNum
-
 	searchFilter += ldapFilterName
 	searchFilter = "(&" + searchFilter + ")"
 
@@ -145,7 +139,7 @@ func TestSearchUser(t *testing.T) {
 		attrs,
 		nil,
 	)
-
+	// 分页查询
 	sr, err := conn.SearchWithPaging(searchRequest, 100)
 	if err != nil {
 		fmt.Println("Fail to search users, err: ", err)

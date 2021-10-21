@@ -34,8 +34,7 @@ type PoolFactory func(string) (ldap.Client, error)
 //
 // closeAt will automagically mark the connection as unusable if the return code
 // of the call is one of those passed, most likely you want to set this to something
-// like
-//   []uint16{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork}
+// like []uint16{ldap.LDAPResultTimeLimitExceeded, ldap.ErrorNetwork}
 func NewChannelPool(initialCap, maxCap int, name string, factory PoolFactory, closeAt []uint16) (Pool, error) {
 	if initialCap < 0 || maxCap <= 0 || initialCap > maxCap {
 		return nil, errors.New("invalid capacity settings")
