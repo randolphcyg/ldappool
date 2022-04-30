@@ -20,7 +20,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/randolphcyg/ldapPool"
+	"github.com/randolphcyg/ldappool"
 	"github.com/go-ldap/ldap/v3"
 	"os"
 	"time"
