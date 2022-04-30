@@ -5,7 +5,7 @@ Based on ldapV3 ldap connection pool, it is convenient to quickly obtain ldap co
 ## 1. install
 
 ```shell
-go get github.com/randolphcyg/ldapPool
+go get github.com/randolphcyg/ldappool
 ```
 
 ## 2. Usage
