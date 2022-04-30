@@ -1,4 +1,4 @@
-module github.com/randolphcyg/ldapPool
+module github.com/randolphcyg/ldappool
 
 go 1.17
 
